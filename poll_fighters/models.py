@@ -2,6 +2,9 @@ from poll_fighters import db
 from sqlalchemy import Column, Integer, ForeignKey, TEXT, Table, String
 from sqlalchemy.orm import declarative_base, relationship
 
+# To Do:
+# Create an Id mixin
+
 Base = declarative_base()
 
 class User(Base):
@@ -22,7 +25,7 @@ class Poll(Base):
     __tablename__ = 'polls'
     id = Column(Integer, primary_key=True)
     description = Column(TEXT)
-    questions = relationship("Question", secondary=association_table,back_populates="parents")
+    questions = relationship("Question", secondary=association_table)
 
 class Question(Base):
     __tablename__ = 'questions'
