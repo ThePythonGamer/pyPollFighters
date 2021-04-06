@@ -1,11 +1,11 @@
 from poll_fighters import models
 from sqlalchemy import select, func, create_engine
 from sqlalchemy.orm import sessionmaker
-import pytest, os
+import pytest
 
 # To Do:
-# Clear the database at the end of each test
-# Add session fixture
+# Make more tests
+# Finish select_user and remove_user
 
 def test_user_initilized_empty(session, engine):
     statement = select(func.count()).select_from(models.User)
@@ -19,6 +19,18 @@ def test_add_user(session, engine):
     session.add(test_user)
     session.commit()
     session.execute(statement).scalar().should.be.equal(1)
+
+def test_select_user(session, engine):
+    statement = select(models.User).where(models.User.username == 'testuser')
+    new_user = models.User('testuser', 'test@email.com')
+    session.add(new_user)
+    session.commit()
+    #placeholder below for tests from yesterday
+    session.execute(statement).scalars().one().username
+
+def test_remove_user(session, engine):
+    statement = select(func.count()).select_from(models.User)
+    
 
 @pytest.fixture
 def session(engine):
