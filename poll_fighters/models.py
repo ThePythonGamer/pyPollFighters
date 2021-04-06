@@ -16,6 +16,10 @@ class User(Base):
     def __repr__(self):
         return '<User %r>' % self.username
 
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+
 association_table = Table('association', Base.metadata,
     Column('poll_id', Integer, ForeignKey('polls.id')),
     Column('right_id', Integer, ForeignKey('questions.id'))
