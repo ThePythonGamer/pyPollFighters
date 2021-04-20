@@ -5,11 +5,13 @@ from sqlalchemy.orm import declarative_base, relationship
 # To Do:
 # Create an Id mixin
 
+class IdMixin:
+    id = Column(Integer, primary_key=True)
+
 Base = declarative_base()
 
-class User(Base):
+class User(Base, IdMixin):
     __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
     username = Column(String(80), unique=True, nullable=False)
     email = Column(String(120), unique=True, nullable=False)
 
@@ -25,14 +27,16 @@ association_table = Table('association', Base.metadata,
     Column('right_id', Integer, ForeignKey('questions.id'))
 )
 
-class Poll(Base):
+class Poll(Base, IdMixin):
     __tablename__ = 'polls'
-    id = Column(Integer, primary_key=True)
     description = Column(TEXT)
     questions = relationship("Question", secondary=association_table)
 
-class Question(Base):
+class Question(Base, IdMixin):
     __tablename__ = 'questions'
-    id = Column(Integer, primary_key=True)
     text = Column(TEXT, unique=True)
-    
+    # choices = relationship("Choice", secondary=association_table)
+
+# class Choice(Base, IdMixin):
+#     __tablename__ = 'choices'
+#     text = Column(TEXT, unique=True)
