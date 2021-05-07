@@ -12,7 +12,7 @@ def test_user_initilized_empty(session):
     response = session.execute(statement)
     response.scalar().should.be.equal(0)
 
-def test_add_user(session):
+def test_add_user(session): 
     for new_user in create_users(1):
         session.add(new_user)
         session.commit()
@@ -87,6 +87,17 @@ def test_select_question(session):
 def test_remove_question(session):
     return 
 
+def test_question_hayden(session):
+    # Creating 2 question types
+    for t in ['Open', 'Multiple Choice']:
+        new_type = models.QuestionType(t)
+        session.add(new_type)
+    session.commit()
+
+    # Create a question
+
+    new_question = models.Question(text='pizza',question_type=new_type)
+
 def test_choice_initialized_empty(session):
     return 
 
@@ -114,9 +125,10 @@ def session(engine):
     session = Session()
     yield session
     print('going to drop tables')
+    session.commit()
     models.Base.metadata.drop_all(engine)
     print('tables successfully dropped')
 
 @pytest.fixture
 def engine():
-    yield create_engine('sqlite:////tmp/apptests.db')
+    yield create_engine('postgresql://testuser:testpassword@localhost:55432/testdb')

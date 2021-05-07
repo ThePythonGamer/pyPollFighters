@@ -32,11 +32,22 @@ class Poll(Base, IdMixin):
     description = Column(TEXT)
     questions = relationship("Question", secondary=association_table)
 
+
 class Question(Base, IdMixin):
     __tablename__ = 'questions'
     text = Column(TEXT, unique=True)
-    # choices = relationship("Choice", secondary=association_table)
+    question_type_id = Column(Integer, ForeignKey('question_types.id'))
+    question_type = relationship("QuestionType")
 
-# class Choice(Base, IdMixin):
-#     __tablename__ = 'choices'
-#     text = Column(TEXT, unique=True)
+    def __init__(self, text, question_type_id):
+        self.text = text
+        self.question_type_id = question_type_id
+
+class QuestionType(Base, IdMixin):
+    __tablename__ = 'question_types'
+    name = Column(String(20), unique=True, nullable=False)
+    description = Column(TEXT)
+    
+    def __init__(self, name, description=None):
+        self.name = name
+        self.description = description
