@@ -73,7 +73,8 @@ class Choice(Base, IdMixin):
 #     open_response = Column(TEXT, nullable=True)
 #     choice_id = Column(Integer, ForeignKey('choices.id'), nullable=True)
 
-class Response(IdMixin):
+class Response(Base, IdMixin):
+    __abstract__ = True
     poll_id = Column(Integer, ForeignKey('polls.id'))
     poll = relationship(Poll)
     responder_user_id = Column(Integer, ForeignKey('users.id'))
@@ -81,11 +82,19 @@ class Response(IdMixin):
     question_id = Column(Integer, ForeignKey('questions.id'))
     question = relationship(Question)
 
-class ResponseOpen(Base, Response): 
+    def __init__(self, poll_id, responder_user_id, question_id):
+        self.poll_id = poll_id
+        self.responder_user_id = responder_user_id
+        self.question_id = question_id
+
+class ResponseOpen(Response): 
     __tablename__ = 'poll_response_open'
     open_response = Column(TEXT)
 
-class ResponseChoice(Base, Response):
+    def __init__(self, open_response):
+        self.open_response = open_response
+
+class ResponseChoice(Response):
     __tablename__ = 'poll_response_choice'
     choice_id = Column(Integer, ForeignKey('choices.id'))
     choice = relationship(Choice)

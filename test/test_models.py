@@ -187,6 +187,47 @@ def find_all_multiple_choice_questions_in_poll(session):
     # Having trouble quering for questions by type and poll id
     # Implement using join
 
+def test_response_initialized_empty(session):
+    statement = select(func.count()).select_from(models.Reponse)
+    response = session.execute(statement)
+    response.scalar().should.be.equal(0)
+
+def test_response_relationships(session):
+    #Creates a user for the the response user id
+    new_user = create_users(1)
+    session.add(new_user)
+    session.commit()
+
+    #Creates a type of question to be used
+    open_type = models.QuestionType('Open Ended')
+    session.add(open_type)
+    session.commit()
+
+    #Creates a question for the poll
+    open_question = models.Question(text='What is the meaning of life', question_type_id=open_type.id)
+    session.add(open_question)
+    session.commit()
+
+    #Creates a poll to be used in the response
+    random_poll = models.Poll(description='Super Random questions about life', questions=open_question)
+    session.add(random_poll)
+    session.commit()
+
+    #Create a response
+    user_response_text = "the meaning of life is 42" 
+    user_response = models.ResponseOpen(poll_id=random_poll.id, responder_user_id=new_user.id, question_id=open_question.id, open_response=user_response_text)
+    session.add(user_response)
+    session.commit()
+    
+    #Verify that there are relationships
+    select_statement = select(models.ResponseOpen)
+    response = session.execute(select_statement)
+    queried_response = response.first()[0]
+    assert queried_response.poll == random_poll
+    assert queried_response.responder_user == new_user
+    assert queried_response.question == open_question
+
+
 def test_choice_initialized_empty(session):
     pass 
 
@@ -198,9 +239,6 @@ def test_select_choice(session):
 
 def test_remove_choice(session):
     pass 
-
-def test_question_ids_of_poll(session):
-    pass
 
 # Make it possible to passthrough name as argument    
 def create_users(amount):
