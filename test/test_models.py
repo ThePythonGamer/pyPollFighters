@@ -281,7 +281,7 @@ def test_add_choice(session):
 
     select_statement = select(models.Choice)
     response = session.execute(select_statement)
-    queried_choice = response.all()
+    queried_choice = [choice for subtpl in response.all() for choice in subtpl]
     [choice1, choice2, choice3].should.equal(queried_choice)
 
 def test_select_choice(session):
