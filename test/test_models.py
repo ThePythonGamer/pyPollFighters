@@ -303,7 +303,7 @@ def test_remove_choice(session):
     # Verifies that the correct choice was deleted
     statement = select(models.Choice).where(models.Choice.id == choice_to_delete.id)
     response = session.execute(statement)
-    assert response.yield_per(None) == None # Cause of fail known
+    list(response).should.be.empty
 
 def test_response_initialized_empty(session):
     statement = select(func.count()).select_from(models.ResponseOpen)
