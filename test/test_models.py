@@ -3,10 +3,6 @@ from sqlalchemy import select, func, create_engine, delete
 from sqlalchemy.orm import sessionmaker
 import pytest, random
 
-# To Do:
-# Make more tests
-# Finish remove_user
-
 def test_user_initilized_empty(session):
     statement = select(func.count()).select_from(models.User)
     response = session.execute(statement)
@@ -46,7 +42,6 @@ def test_remove_user(session):
     assert session.get(models.User, rdm_user.id) != None
     session.delete(rdm_user)
     session.flush()
-    # assert session.get(models.User, rdm_user.id) == None
 
 def test_change_user_name(session):
     for new_user in create_users(2):
@@ -63,93 +58,68 @@ def test_change_user_passwd(session):
         session.add(new_user)
         session.commit()
 
-def test_poll_initilized_empty(session):
-    return
-
-def test_add_poll(session):
-    return
-
-def test_select_poll(session):
-    return 
-
-def test_remove_poll(session):
-    return 
-
-def test_question_initialized_empty(session):
-    return 
-
-def test_add_question(session):
-    return 
-
-def test_select_question(session):
-    return 
-
-def test_remove_question(session):
-    return 
-
-def test_question_hayden(session):
-    # Creating 2 question types
-    for t in ['Open', 'Multiple Choice']:
-        new_type = models.QuestionType(t)
-        session.add(new_type)
-    session.commit()
-
-    # Create a question
-
-    new_question = models.Question(text='pizza',question_type_id=new_type.id)
-
 def test_add_multiple_question_to_poll(session):
-    # Creates a single type for questions
-    multiple_type = models.QuestionType('Multiple Choice')
-    session.add(multiple_type)
-    session.commit()
+    #Creates a user for the the response user id
+    for new_user in create_users(1):
+        session.add(new_user)
+        session.commit()
 
-    # Creates multiple questions using a single type
-    first_question = models.Question(text='pizza', question_type_id=multiple_type.id)
-    second_question = models.Question(text='sushi', question_type_id=multiple_type.id)
-    third_question = models.Question(text='tacos', question_type_id=multiple_type.id)
-    session.add(first_question)
-    session.add(second_question)
-    session.add(third_question)
-    session.commit()
-    
-    # Creates a poll using the three questions made above
-    food_poll = models.Poll(description="What are your favorite foods?", questions=[first_question,second_question,third_question])
-    session.add(food_poll)
-    session.commit()
+        # Creates a single type for questions
+        multiple_type = models.QuestionType('Multiple Choice')
+        session.add(multiple_type)
+        session.commit()
 
-    # Selects the poll from the database and asserts that it was assigned all three questions from above
-    select_statement = select(models.Poll).where(models.Poll.id == food_poll.id)
-    response = session.execute(select_statement)
-    queried_poll = response.first()[0]
-    assert queried_poll.questions == [first_question, second_question, third_question]
+        # Creates multiple questions using a single type
+        first_question = models.Question(text='pizza', question_type_id=multiple_type.id)
+        second_question = models.Question(text='sushi', question_type_id=multiple_type.id)
+        third_question = models.Question(text='tacos', question_type_id=multiple_type.id)
+        session.add(first_question)
+        session.add(second_question)
+        session.add(third_question)
+        session.commit()
+        
+        # Creates a poll using the three questions made above
+        food_poll = models.Poll(creator_id=new_user.id, description="What are your favorite foods?", questions=[first_question,second_question,third_question])
+        session.add(food_poll)
+        session.commit()
+
+        # Selects the poll from the database and asserts that it was assigned all three questions from above
+        select_statement = select(models.Poll).where(models.Poll.id == food_poll.id)
+        response = session.execute(select_statement)
+        queried_poll = response.first()[0]
+        assert queried_poll.questions == [first_question, second_question, third_question]
 
 def test_add_multiple_qestions_of_different_types_in_poll(session):
-    # Creates multiple types for questions
-    multiple_type = models.QuestionType('Multiple Choice')
-    open_type = models.QuestionType('Open Ended')
-    session.add(multiple_type)
-    session.add(open_type)
-    session.commit()
+    #Creates a user for the the response user id
+    for new_user in create_users(1):
+        session.add(new_user)
+        session.commit()
 
-    # Creates Multiple question using the different types above
-    multiple_question = models.Question(text='Minecraft', question_type_id=multiple_type.id)
-    open_question = models.Question(text='What is the meaning of life', question_type_id=open_type.id)
-    session.add(multiple_question)
-    session.add(open_question)
-    session.commit()
+        # Creates multiple types for questions
+        multiple_type = models.QuestionType('Multiple Choice')
+        open_type = models.QuestionType('Open Ended')
+        session.add(multiple_type)
+        session.add(open_type)
+        session.commit()
 
-    # Creates a poll that includes the different question above
-    random_poll = models.Poll(description='Random questions about life', questions=[multiple_question, open_question])
-    session.add(random_poll)
-    session.commit()
+        # Creates Multiple question using the different types above
+        multiple_question = models.Question(text='Minecraft', question_type_id=multiple_type.id)
+        open_question = models.Question(text='What is the meaning of life', question_type_id=open_type.id)
+        session.add(multiple_question)
+        session.add(open_question)
+        session.commit()
 
-    #
-    select_statement = select(models.Poll).where(models.Poll.id == random_poll.id)
-    response = session.execute(select_statement)
-    queried_poll = response.first()[0]
-    queried_poll.questions.should.contain(open_question)
-    queried_poll.questions.should.contain(multiple_question)
+        # Creates a poll that includes the different question above
+        random_poll = models.Poll(creator_id=new_user.id, description='Random questions about life', questions=[multiple_question, open_question])
+        session.add(random_poll)
+        session.commit()
+
+        # Checks that the poll includes both an open and multiple choice question
+        select_statement = select(models.Poll).where(models.Poll.id == random_poll.id)
+        response = session.execute(select_statement)
+        queried_poll = response.first()[0]
+        queried_poll.questions.should.contain(open_question)
+        queried_poll.questions.should.contain(multiple_question)
 
 def test_add_multiple_polls(session):
     pass
@@ -186,8 +156,6 @@ def find_all_multiple_choice_questions_in_poll(session):
     # To Do: 
     # Having trouble quering for questions by type and poll id
     # Implement using join
-
-
 
 def test_choice_initialized_empty(session):
     statement = select(func.count()).select_from(models.Choice)
@@ -292,9 +260,6 @@ def test_remove_choice(session):
     choice_to_delete = choice3
     session.delete(choice_to_delete)
     session.flush()
-    # Randomly chooses a choice  to delete
-    # rdm_user = random.choice(new_users)
-    # assert session.get(models.User, rdm_user.id) != None
     
     # Verifies that there are only 2 choices now
     statement = select(func.count()).select_from(models.Choice)
@@ -327,7 +292,7 @@ def test_response_open_relationships(session):
         session.commit()
 
         #Creates a poll to be used in the response
-        random_poll = models.Poll(description='Super Random questions about life', questions=[open_question])
+        random_poll = models.Poll(creator_id=new_user.id, description='Super Random questions about life', questions=[open_question])
         session.add(random_poll)
         session.commit()
 
@@ -375,13 +340,12 @@ def test_response_choice_relationships(session):
         session.commit()
 
         # Creates a poll to be used in the response
-        random_poll = models.Poll(description='Super Random questions about life', questions=[multiple_question])
+        random_poll = models.Poll(creator_id=new_user.id, description='Super Random questions about life', questions=[multiple_question])
         session.add(random_poll)
         session.commit()
 
         # Create a response
         chosen_choice = choice1
-        user_response_text = "the meaning of life is 42" 
         user_response = models.ResponseChoice(poll_id=random_poll.id, responder_user_id=new_user.id, question_id=multiple_question.id, choice_id=chosen_choice.id)
         session.add(user_response)
         session.commit()

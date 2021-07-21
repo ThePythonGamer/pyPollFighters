@@ -27,10 +27,13 @@ association_table = Table('association', Base.metadata,
 
 class Poll(Base, IdMixin):
     __tablename__ = 'polls'
+    creator_id = Column(Integer, ForeignKey('users.id'))
+    creator = relationship('User')
     description = Column(TEXT)
     questions = relationship("Question", secondary=association_table)
 
-    def __init__(self, description, questions=None):
+    def __init__(self, creator_id,  description, questions=None):
+        self.creator_id = creator_id
         self.description = description
         if questions != None:
             self.questions = questions
@@ -118,3 +121,4 @@ class ResponseChoice(Base, Response):
         self.poll_id = poll_id
         self.responder_user_id = responder_user_id
         self.question_id = question_id
+
