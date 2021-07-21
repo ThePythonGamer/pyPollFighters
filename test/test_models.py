@@ -121,9 +121,6 @@ def test_add_multiple_qestions_of_different_types_in_poll(session):
         queried_poll.questions.should.contain(open_question)
         queried_poll.questions.should.contain(multiple_question)
 
-def test_add_multiple_polls(session):
-    pass
-
 def find_all_multiple_choice_questions_in_poll(session):
     multiple_type = models.QuestionType('Multiple Choice')
     open_type = models.QuestionType('Open Ended')
