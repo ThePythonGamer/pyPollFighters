@@ -113,7 +113,8 @@ class ResponseChoice(Base, Response):
     choice_id = Column(Integer, ForeignKey('choices.id'))
     choice = relationship(Choice)
 
-    def __init__(self, poll_id, responder_user_id, question_id):
+    def __init__(self, choice_id, poll_id, responder_user_id, question_id):
+        self.choice_id = choice_id
         self.poll_id = poll_id
         self.responder_user_id = responder_user_id
         self.question_id = question_id

@@ -187,6 +187,124 @@ def find_all_multiple_choice_questions_in_poll(session):
     # Having trouble quering for questions by type and poll id
     # Implement using join
 
+
+
+def test_choice_initialized_empty(session):
+    statement = select(func.count()).select_from(models.Choice)
+    response = session.execute(statement)
+    response.scalar().should.be.equal(0)
+
+def test_add_choice(session):
+    # Create a multiple choice type for questions
+    multiple_type = models.QuestionType('Multiple Choice')
+    session.add(multiple_type)
+    session.commit()
+
+    # Create a question with the multiple choice type
+    multiple_question = models.Question(text='What is the meaning of life', question_type_id=multiple_type.id)
+    session.add(multiple_question)
+    session.commit()
+
+    # Create all the choices associated to the previous question
+    choice1 = models.Choice(text='42', question_id=multiple_question.id)
+    choice2 = models.Choice(text='happiness', question_id=multiple_question.id)
+    choice3 = models.Choice(text='nothing', question_id=multiple_question.id)
+    session.add(choice1)
+    session.add(choice2)
+    session.add(choice3)
+    session.commit()
+
+    # Checking that all choices have been added
+    statement = select(func.count()).select_from(models.Choice)
+    session.execute(statement).scalar().should.be.equal(3)
+
+    # Checking that the choices added are the same as the ones created above
+    select_statement = select(models.Choice)
+    response = session.execute(select_statement)
+    queried_choice = [choice for subtpl in response.all() for choice in subtpl]
+    [choice1, choice2, choice3].should.equal(queried_choice)
+
+def test_select_choice_by_question_id(session):
+    # Create a multiple choice type for questions
+    multiple_type = models.QuestionType('Multiple Choice')
+    session.add(multiple_type)
+    session.commit()
+
+    # Create two different questions with the multiple choice type
+    multiple_question1 = models.Question(text='What is the meaning of life', question_type_id=multiple_type.id)
+    multiple_question2 = models.Question(text='What is your favorite colour', question_type_id=multiple_type.id)
+    session.add(multiple_question1)
+    session.add(multiple_question2)
+    session.commit()
+
+    # Create all the choices for the first question
+    q1_choice1 = models.Choice(text='42', question_id=multiple_question1.id)
+    q1_choice2 = models.Choice(text='happiness', question_id=multiple_question1.id)
+    q1_choice3 = models.Choice(text='nothing', question_id=multiple_question1.id)
+    session.add(q1_choice1)
+    session.add(q1_choice2)
+    session.add(q1_choice3)
+
+    # Create all the choices for the second question
+    q2_choice1 = models.Choice(text='red', question_id=multiple_question2.id)
+    q2_choice2 = models.Choice(text='green', question_id=multiple_question2.id)
+    q2_choice3 = models.Choice(text='blue', question_id=multiple_question2.id)
+    session.add(q2_choice1)
+    session.add(q2_choice2)
+    session.add(q2_choice3)
+    session.commit()
+
+    # Checking that all choices have been added
+    statement = select(func.count()).select_from(models.Choice)
+    session.execute(statement).scalar().should.be.equal(6)
+
+    # Checking that the only choices for question 2 are the ones associated to that one
+    select_statement = select(models.Choice).where(models.Choice.question_id == multiple_question2.id)
+    response = session.execute(select_statement)
+    queried_choice = [choice for subtpl in response.all() for choice in subtpl]
+    [q2_choice1, q2_choice2, q2_choice3].should.equal(queried_choice)
+
+def test_remove_choice(session):
+    # Create a multiple choice type for questions
+    multiple_type = models.QuestionType('Multiple Choice')
+    session.add(multiple_type)
+    session.commit()
+
+    # Create a question with the multiple choice type
+    multiple_question = models.Question(text='What is the meaning of life', question_type_id=multiple_type.id)
+    session.add(multiple_question)
+    session.commit()
+
+    # Create all the choices for the question
+    choice1 = models.Choice(text='42', question_id=multiple_question.id)
+    choice2 = models.Choice(text='happiness', question_id=multiple_question.id)
+    choice3 = models.Choice(text='nothing', question_id=multiple_question.id)
+    session.add(choice1)
+    session.add(choice2)
+    session.add(choice3)
+    session.commit()
+
+    # Verifies that the choices were added
+    statement = select(func.count()).select_from(models.Choice)
+    session.execute(statement).scalar().should.be.equal(3)
+
+    # Removes a choice from the question
+    choice_to_delete = choice3
+    session.delete(choice_to_delete)
+    session.flush()
+    # Randomly chooses a choice  to delete
+    # rdm_user = random.choice(new_users)
+    # assert session.get(models.User, rdm_user.id) != None
+    
+    # Verifies that there are only 2 choices now
+    statement = select(func.count()).select_from(models.Choice)
+    session.execute(statement).scalar().should.be.equal(2)
+
+    # Verifies that the correct choice was deleted
+    statement = select(models.Choice).where(models.Choice.id == choice_to_delete.id)
+    response = session.execute(statement)
+    list(response).should.be.empty
+
 def test_response_initialized_empty(session):
     statement = select(func.count()).select_from(models.ResponseOpen)
     response = session.execute(statement)
@@ -226,7 +344,7 @@ def test_response_open_relationships(session):
         assert queried_response.poll == random_poll
         assert queried_response.responder_user == new_user
         assert queried_response.question == open_question
-
+        assert queried_response.open_response == user_response_text
 
 def test_response_choice_initialized_empty(session):
     statement = select(func.count()).select_from(models.ResponseChoice)
@@ -234,64 +352,48 @@ def test_response_choice_initialized_empty(session):
     response.scalar().should.be.equal(0)
 
 def test_response_choice_relationships(session):
-    #Creates a user for the the response user id
+    # Creates a user for the the response user id
     for new_user in create_users(1):
         session.add(new_user)
         session.commit()
 
-        #Creates a type of question to be used
+        # Creates a type of question to be used
         multiple_type = models.QuestionType('Multiple Choice')
         session.add(multiple_type)
         session.commit()
 
-        #Creates a question for the poll
+        # Creates a question for the poll
         multiple_question = models.Question(text='What is the meaning of life', question_type_id=multiple_type.id)
         session.add(multiple_question)
         session.commit()
+        
+        # Creates the choices for the question
+        choice1 = models.Choice(text='42', question_id=multiple_question.id)
+        choice2 = models.Choice(text='happiness', question_id=multiple_question.id)
+        session.add(choice1)
+        session.add(choice2)
+        session.commit()
 
-        #Creates a poll to be used in the response
+        # Creates a poll to be used in the response
         random_poll = models.Poll(description='Super Random questions about life', questions=[multiple_question])
         session.add(random_poll)
         session.commit()
 
-def test_choice_initialized_empty(session):
-    statement = select(func.count()).select_from(models.Choice)
-    response = session.execute(statement)
-    response.scalar().should.be.equal(0)
+        # Create a response
+        chosen_choice = choice1
+        user_response_text = "the meaning of life is 42" 
+        user_response = models.ResponseChoice(poll_id=random_poll.id, responder_user_id=new_user.id, question_id=multiple_question.id, choice_id=chosen_choice.id)
+        session.add(user_response)
+        session.commit()
 
-def test_add_choice(session):
-    multiple_type = models.QuestionType('Multiple Choice')
-    session.add(multiple_type)
-    session.commit()
-
-    multiple_question = models.Question(text='What is the meaning of life', question_type_id=multiple_type.id)
-    session.add(multiple_question)
-    session.commit()
-
-    choice1 = models.Choice(text='42', question_id=multiple_question.id)
-    choice2 = models.Choice(text='happiness', question_id=multiple_question.id)
-    choice3 = models.Choice(text='nothing', question_id=multiple_question.id)
-    session.add(choice1)
-    session.add(choice2)
-    session.add(choice3)
-    session.commit()
-
-    statement = select(func.count()).select_from(models.Choice)
-    session.execute(statement).scalar().should.be.equal(3)
-
-    select_statement = select(models.Choice)
-    response = session.execute(select_statement)
-    queried_choice = [choice for subtpl in response.all() for choice in subtpl]
-    [choice1, choice2, choice3].should.equal(queried_choice)
-
-def test_select_choice(session):
-    pass 
-
-def test_remove_choice(session):
-    pass 
-
-def test_get_all_choices_from_question(session):
-    pass
+        #Verify that there are relationships
+        select_statement = select(models.ResponseChoice)
+        response = session.execute(select_statement)
+        queried_response = response.first()[0]
+        assert queried_response.poll == random_poll
+        assert queried_response.responder_user == new_user
+        assert queried_response.question == multiple_question
+        assert queried_response.choice == chosen_choice
 
 # Make it possible to passthrough name as argument    
 def create_users(amount):
